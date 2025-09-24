@@ -11,5 +11,7 @@ var chromeSettings = new ChromeSettings()
     ;
 
 server.UseChrome(chromeSettings);
+var fetcher = new BrowserFetcher();
+await fetcher.DownloadAsync();
 
 await server.RunAsync();

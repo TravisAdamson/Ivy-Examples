@@ -1,8 +1,3 @@
-using Ivy;
-using PuppeteerSharp;
-using System;
-using System.Reactive.Linq;
-
 namespace PuppeteerSharpDemo
 {
     [App(icon: Icons.Image)]
@@ -39,7 +34,7 @@ namespace PuppeteerSharpDemo
                 return Text.Muted($"Screenshot saved at: {screenshotUrl.Value}");
             }
 
-            return null;
+            return Text.Muted(string.Empty);
         }
 
         // --- UI parts ---
@@ -74,7 +69,6 @@ namespace PuppeteerSharpDemo
 
             try
             {
-                await new BrowserFetcher().DownloadAsync();
                 using var browser = await Puppeteer.LaunchAsync(new LaunchOptions { Headless = true });
                 using var page = await browser.NewPageAsync();
                 await page.GoToAsync(inputUrl);

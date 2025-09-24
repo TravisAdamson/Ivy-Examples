@@ -1,5 +1,4 @@
-﻿using PuppeteerSharp;
-using PuppeteerSharp.Media;
+﻿using PuppeteerSharp.Media;
 
 namespace PuppeteerSharpDemo.Apps
 {
@@ -57,7 +56,6 @@ namespace PuppeteerSharpDemo.Apps
 
             try
             {
-                await new BrowserFetcher().DownloadAsync();
                 using var browser = await Puppeteer.LaunchAsync(new LaunchOptions { Headless = true });
                 using var page = await browser.NewPageAsync();
                 await page.GoToAsync(target);
