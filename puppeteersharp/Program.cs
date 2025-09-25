@@ -12,6 +12,10 @@ var chromeSettings = new ChromeSettings()
 
 server.UseChrome(chromeSettings);
 var fetcher = new BrowserFetcher();
+
+Console.WriteLine("Downloading Browser... This may take a while depending on your internet connection...");
 await fetcher.DownloadAsync();
+
+Console.WriteLine("Download complete. Running App..");
 
 await server.RunAsync();
