@@ -6,7 +6,7 @@ using ChatMessage = Ivy.ChatMessage;
 namespace OllamaSharpDemo.Apps;
 
 [App(icon: Icons.TextQuote, title: "OllamaSharp")]
-public class OllamaSharpSample : ViewBase
+public class OllamaSharp : ViewBase
 {
     private const string Url = "http://localhost:11434";
     private IState<ImmutableArray<ChatMessage>> messages;
