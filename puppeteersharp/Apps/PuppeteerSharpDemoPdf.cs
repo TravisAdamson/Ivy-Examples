@@ -63,7 +63,7 @@ namespace PuppeteerSharpDemo.Apps
                 var folder = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "pdfs");
                 Directory.CreateDirectory(folder);
 
-                var fileName = $"page-{Guid.NewGuid():N}.pdf";
+                var fileName = $"page-{Guid.NewGuid().ToString("N")}.pdf";
                 var path = System.IO.Path.Combine(folder, fileName);
 
                 await page.PdfAsync(path, new PdfOptions

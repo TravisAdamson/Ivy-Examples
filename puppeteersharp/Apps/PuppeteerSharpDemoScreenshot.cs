@@ -4,14 +4,14 @@ namespace PuppeteerSharpDemo
     public class PuppeteerSharpDemoScreenshot : ViewBase
     {
         private IState<string> url = null!;
-        private IState<string?> screenshotUrl = null!;
+        private IState<string?> screenshotPath = null!;
         private IState<bool> isLoading = null!;
 
         public override object? Build()
         {
             // initialize states
             url = this.UseState("");
-            screenshotUrl = this.UseState<string?>();
+            screenshotPath = this.UseState<string?>();
             isLoading = this.UseState(false);
 
 
@@ -29,9 +29,9 @@ namespace PuppeteerSharpDemo
 
         private IView RenderScreenshot()
         {
-            if (!string.IsNullOrEmpty(screenshotUrl.Value))
+            if (!string.IsNullOrEmpty(screenshotPath.Value))
             {
-                return Text.Muted($"Screenshot saved at: {screenshotUrl.Value}");
+                return Text.Muted($"Screenshot saved at: {screenshotPath.Value}");
             }
 
             return Text.Muted(string.Empty);
@@ -75,19 +75,19 @@ namespace PuppeteerSharpDemo
 
                 var folder = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "screenshots");
                 Directory.CreateDirectory(folder);
-                var fileName = $"screenshot-{Guid.NewGuid():N}.png";
+                var fileName = $"screenshot-{Guid.NewGuid().ToString("N")}.png";
                 var path = System.IO.Path.Combine(folder, fileName);
 
                 var bytes = await page.ScreenshotDataAsync(new ScreenshotOptions { FullPage = true });
                 File.WriteAllBytes(path, bytes);   // <-- actually writes the file
 
-                screenshotUrl.Set(path);
+                screenshotPath.Set(path);
 
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Error: " + ex.Message);
-                screenshotUrl.Set("");
+                screenshotPath.Set("");
             }
             finally
             {
