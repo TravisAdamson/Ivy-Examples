@@ -5,18 +5,25 @@ public class ProductsApp : ViewBase
 {
     public override object? Build()
     {
-        var ShopDomain = Environment.GetEnvironmentVariable("SHOPIFY_SHOP_DOMAIN") ?? "";
-        var AccessToken = Environment.GetEnvironmentVariable("SHOPIFY_ACCESS_TOKEN") ?? "";
-        var productService = new ProductService(ShopDomain, AccessToken);
+        var shopDomain = this.UseState<string>(() => "");
+        var accessToken = this.UseState<string>(() => "");
         var products = this.UseState<Product[]?>(() => null);
-        var isLoading = this.UseState(true);
+        var isLoading = this.UseState(false);
         var error = this.UseState<string?>(() => null);
 
-        this.UseEffect(async () =>
+        async Task LoadProducts()
         {
+            if (string.IsNullOrWhiteSpace(shopDomain.Value) || string.IsNullOrWhiteSpace(accessToken.Value))
+            {
+                error.Value = "Please fill in both domain and access token fields";
+                return;
+            }
+
             try
             {
                 isLoading.Value = true;
+                error.Value = null;
+                var productService = new ProductService(shopDomain.Value, accessToken.Value);
                 var result = await productService.ListAsync();
                 products.Value = result?.Items?.ToArray() ?? Array.Empty<Product>();
             }
@@ -32,7 +39,7 @@ public class ProductsApp : ViewBase
             {
                 isLoading.Value = false;
             }
-        }, []);
+        }
 
         object productCard(Product p)
         {
@@ -56,8 +63,11 @@ public class ProductsApp : ViewBase
             );
         }
 
-        var header = Layout.Horizontal().Align(Align.Right)
-            | Text.Block("Domain: " + "example.myshopify.com");
+        var header = Layout.Vertical().Gap(3)
+            | Text.H3("Shopify Products")
+            | shopDomain.ToTextInput().Placeholder("Domain (e.g.: example.myshopify.com)")
+            | accessToken.ToTextInput().Placeholder("Access Token")
+            | new Button("Get Products", onClick: async _ => await LoadProducts());
 
         object body;
         if (error.Value != null)
@@ -68,19 +78,21 @@ public class ProductsApp : ViewBase
         {
             body = Layout.Center() | Text.Block("Loading products...");
         }
-        else if (products.Value?.Length == 0)
+        else if (products.Value == null)
+        {
+            body = Layout.Center() | Text.Block("Click the button above to view products");
+        }
+        else if (products.Value.Length == 0)
         {
             body = Layout.Center() | Text.Block("No products found.");
         }
         else
         {
-            body = Layout.Grid().Columns(4) | products.Value!.Select(productCard).ToArray();
+            body = Layout.Grid().Columns(4) | products.Value.Select(productCard).ToArray();
         }
 
-        return Layout.Horizontal().Align(Align.Center)
-               | new HeaderLayout(header, Layout.Vertical().Gap(4)
-                    | Text.H2("Products")
-                    | body
-                 ).Width(Size.Full().Max(300));
+        return Layout.Vertical().Gap(4)
+               | header
+               | body;
     }
 }
