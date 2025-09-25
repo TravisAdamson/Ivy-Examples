@@ -1,5 +1,4 @@
 using Ivy_Handlebars_Demo.Apps;
-using Microsoft.AspNetCore.Hosting.Server;
 CultureInfo.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("en-US");
 var server = new Server();
 #if DEBUG

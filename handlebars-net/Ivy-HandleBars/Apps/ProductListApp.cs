@@ -39,7 +39,7 @@ public class ProductListApp : ViewBase
 
         // State for the product being added in the input fields.
         var productNameState = this.UseState<string>(string.Empty);
-        var productPriceState = this.UseState<decimal>(0);
+        var productPriceState = this.UseState<string>(string.Empty);
         var productCategoryState = this.UseState<string>(string.Empty);
 
         // Compile the Handlebars template once
@@ -49,13 +49,17 @@ public class ProductListApp : ViewBase
         ValueTask AddProduct(Event<Button> _)
         {
             var products = productsState.Value;
-            products.Add(new Product { Name = productNameState.Value, Price = productPriceState.Value, Category = productCategoryState.Value });
+            decimal price = 0;
+            if (!string.IsNullOrWhiteSpace(productPriceState.Value) && decimal.TryParse(productPriceState.Value, out var parsedPrice))
+                price = parsedPrice;
+
+            products.Add(new Product { Name = productNameState.Value, Price = price, Category = productCategoryState.Value });
 
             productsState.Value = new List<Product>(products); // Create a new list to trigger a state update
 
             // Clear the form
             productNameState.Value = string.Empty;
-            productPriceState.Value = 0;
+            productPriceState.Value = string.Empty;
             productCategoryState.Value = string.Empty;
 
             return ValueTask.CompletedTask;
@@ -70,9 +74,9 @@ public class ProductListApp : ViewBase
                 | Text.Block("Add products below. The list is rendered using Handlebars.Net.")
                 | new Separator()
                 | Text.Block("New Product Details:")
-                | new TextInput(productNameState) { Placeholder = "Product Name" }
-                | new TextInput(productPriceState) { Placeholder = "Price" }
-                | new TextInput(productCategoryState) { Placeholder = "Category" }
+                | productNameState.ToInput(placeholder: "Product Name")
+                | productPriceState.ToInput(placeholder: "Price")
+                | productCategoryState.ToInput(placeholder: "Category")
                 | new Button("Add Product") { OnClick = AddProduct }
                 | new Separator()
                 | Text.H2("Products")

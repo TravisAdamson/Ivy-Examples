@@ -1,5 +1,4 @@
 ﻿using HandlebarsDotNet;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace Ivy_Handlebars_Demo.Apps;
@@ -53,9 +52,9 @@ public class TemplateApp : ViewBase
             | Text.H2("Handlebars.Net Demo")
             | Text.Block("Enter a Handlebars template and a JSON model to see the live output.")
             | Text.H3("Template")
-            | new TextInput(templateState)
+            | templateState.ToCodeInput(placeholder: "Handlebars Template")
             | Text.H3("JSON Model")
-            | new TextInput(modelState)
+            | modelState.ToCodeInput(language: Languages.Json, placeholder: "JSON Model")
             | new Separator()
             | Text.H3("Output")
             | new Html(outputState.Value ?? "Output will appear here...") // Use Html component to display the rendered string
