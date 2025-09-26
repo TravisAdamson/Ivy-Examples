@@ -13,9 +13,9 @@ internal class ParseTreeNodeInfo
             new("Is token", (TreeNode.Token is not null).ToString()) ,
             new("Found token", TreeNode.FindToken().ToString()) ,
             new("Found token location", TreeNode.FindToken().Location.ToString()) ,
-            new("Is binary non-reference opeation", TreeNode.IsBinaryNonReferenceOperation().ToString()) ,
-            new("Is binary opeation", TreeNode.IsBinaryOperation().ToString()) ,
-            new("Is binary reference opeation", TreeNode.IsBinaryReferenceOperation().ToString()) ,
+            new("Is binary non-reference operation", TreeNode.IsBinaryNonReferenceOperation().ToString()) ,
+            new("Is binary operation", TreeNode.IsBinaryOperation().ToString()) ,
+            new("Is binary reference operation", TreeNode.IsBinaryReferenceOperation().ToString()) ,
             new("Is built-in function", TreeNode.IsBuiltinFunction().ToString()) ,
             new("Is external function", TreeNode.IsExternalUDFunction().ToString()) ,
             new("Is function", TreeNode.IsFunction().ToString()) ,
@@ -29,7 +29,7 @@ internal class ParseTreeNodeInfo
             new("Is unary operation", TreeNode.IsUnaryOperation().ToString()) ,
             new("Is unary postfix operation", TreeNode.IsUnaryPostfixOperation().ToString()) ,
             new("Is unary prefix operation", TreeNode.IsUnaryPrefixOperation().ToString()) ,
-            new("Is union", TreeNode.IsUnion().ToString().ToString()) ,
+            new("Is union", TreeNode.IsUnion().ToString()) ,
         ];    
 }
 
