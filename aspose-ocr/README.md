@@ -1,6 +1,6 @@
 # Ivy.Aspose.OCR.Examples 
 
-Web application created using [Ivy](https://github.com/Ivy-Interactive/Ivy). 
+Web application created using [Ivy](https://github.com/Ivy-Interactive/Ivy-Framework). 
 
 Ivy is a web framework for building interactive web applications using C# and .NET.
 
@@ -21,4 +21,4 @@ dotnet watch
 
 ## Output Screenshot
 
-![OCR Output](aspose-OCR-image-to-text.png)
+![OCR Example](Apps/aspose-OCR-image-to-text.png)
