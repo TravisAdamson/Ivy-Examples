@@ -19,7 +19,7 @@ RUN dotnet build "Zstring.csproj" -c $BUILD_CONFIGURATION -o /app/build
 # Publish stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "Zstring.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=true
+RUN dotnet publish "Zstring.csproj" -c $BUILD_CONFIGURATION -o /app/publish
 
 # Final runtime image
 FROM base AS final

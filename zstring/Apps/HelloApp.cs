@@ -1,5 +1,5 @@
 using Ivy;
-using Ivy.Shared;     // علشان Colors.*
+using Ivy.Shared;     // for Colors.*
 using Cysharp.Text;
 
 namespace IvyExamples.ZStringDemo.Apps;
@@ -7,7 +7,7 @@ namespace IvyExamples.ZStringDemo.Apps;
 [App(icon: Icons.PartyPopper, title: "ZString Demo")]
 public class HelloApp : ViewBase
 {
-    public override object Build()   // ينفع تشيل ? لتسكّت التحذير
+    public override object Build()   
     {
         var concatState   = this.UseState<string>();
         var builderState  = this.UseState<string>();
