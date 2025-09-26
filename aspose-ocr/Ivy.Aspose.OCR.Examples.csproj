@@ -19,10 +19,5 @@
     <PackageReference Include="Aspose.OCR" Version="25.9.0" />
     <PackageReference Include="Ivy" Version="1.0.113.0" />
   </ItemGroup>
-  
-
-  <ItemGroup>
-    <Folder Include="Apps\Views\" />
-  </ItemGroup>
 
 </Project>

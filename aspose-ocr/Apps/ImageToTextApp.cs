@@ -1,4 +1,5 @@
 ﻿using Ivy.Aspose.OCR.Examples.Connections.OCR;
+using System.IO;
 
 namespace Ivy.Aspose.OCR.Examples.Apps;
 
@@ -8,25 +9,24 @@ public class ImageToTextApp : ViewBase
     public override object? Build()
     {
         var outputText = this.UseState<string>("");
-        var client = UseService<IClientProvider>();
+        var ocrService = UseService<IOCRService>();
 
         var error = UseState<string?>(() => null);
-        var ocrService = UseService<IOCRService>();
         var files = UseState<FileInput?>(() => null);
+        var fileBytes = UseState<byte[]?>(() => null); // Store the actual file bytes
 
         var uploadUrl = this.UseUpload(
-            fileBytes =>
+            uploadedBytes =>
             {
-                if (fileBytes.Length > 1 * 1024 * 1024) // 1MB limit
+                if (uploadedBytes.Length > 1 * 1024 * 1024) // 1MB limit
                 {
-                    client.Toast("File size must be less than 1MB", "Validation Error");
                     error.Set("File size must be less than 1MB");
+                    fileBytes.Set((byte[]?)null); // Clear stored bytes on error
                     return;
                 }
 
                 error.Set((string?)null);
-                // Process uploaded file bytes
-                Console.WriteLine($"Received {fileBytes.Length} bytes");
+                fileBytes.Set(uploadedBytes); // Store the file bytes for later use
             },
             "image/jpeg",
             "uploaded-image"
@@ -38,18 +38,15 @@ public class ImageToTextApp : ViewBase
             error.Value != null
                 ? new Callout(error.Value, variant: CalloutVariant.Error)
                 : null,
-            files.ToFileInput(uploadUrl, "Upload Image").Accept(".jpg,.jpeg,.png"),
+            files.ToFileInput(uploadUrl, "Upload Image").Accept("image/*"),
             new Button("Recognize", _ =>
             {
-                if (error.Value == null && files.Value != null)
+                if (error.Value == null && fileBytes.Value != null)
                 {
-                    var file = files.Value;
-
-                    // TODO: file.Content is getting null or empty
-                    using var ms = new MemoryStream(file.Content);
+                    // Use the stored file bytes instead of file.Content
+                    using var ms = new MemoryStream(fileBytes.Value);
                     outputText.Value = ocrService.ExtractText(ms);
-
-                    Console.WriteLine($"extracted Text: {outputText.Value}");
+                    fileBytes.Set((byte[]?)null); // Clear stored bytes once completed
                 }
             }),
             Text.Block("Output Text:"),

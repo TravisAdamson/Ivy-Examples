@@ -20,9 +20,13 @@ public class AsposeOcrService: IOCRService
         // Perform OCR
         List<RecognitionResult> results
              = recognitionEngine.Recognize(source);
-        
+
         // OCR processing
-        var result = results[0].RecognitionText;
+        string result = string.Empty;
+        if (results.Count > 0)
+        {
+            result = results[0].RecognitionText;
+        }
 
         return result;
     }
