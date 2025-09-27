@@ -13,7 +13,7 @@ public static class EPPLusExtensions
         .Select(p => new
         {
             Property = p,
-            Column = p.GetCustomAttributes<Column>().First().ColumnIndex //safe because if where above
+            Column = p.GetCustomAttributes<Column>().First().ColumnIndex //safe because of the where clause above
         }).ToList();
 
 

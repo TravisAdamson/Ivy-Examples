@@ -7,28 +7,32 @@ namespace EEPlusSoftware.Apps;
 [App(icon: Icons.Box, title: "EEPlus Software Demo")]
 public class EEPlusDemo : ViewBase
 {
-    public override object? Build()
-    {
-        var filePath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "books.xlsx");
-        var client = UseService<IClientProvider>();
+    private static string GetExcelFilePath() =>
+       System.IO.Path.Combine(System.IO.Path.GetTempPath(), "books.xlsx");
 
-        // Ensure file exists
+    private static void EnsureExcelFileExists(string filePath)
+    {
         if (!File.Exists(filePath))
         {
             using var package = new ExcelPackage();
             package.Workbook.Worksheets.Add("Books");
             package.SaveAs(new FileInfo(filePath));
         }
+    }
+    public override object? Build()
+    {
+        var filePath = GetExcelFilePath();
+        var client = UseService<IClientProvider>();
+
+        // Ensure file exists
+        EnsureExcelFileExists(filePath);
 
         var booksState = UseState<List<Book>>(() => ExcelManipulation.ReadExcel());
-        booksState.Value = ExcelManipulation.ReadExcel();
 
 
         var downloadUrl = this.UseDownload(
         async () =>
         {
-            var filePath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "books.xlsx");
-
             // Read the file into memory
             byte[] fileBytes = await File.ReadAllBytesAsync(filePath);
 
@@ -61,9 +65,9 @@ public class EEPlusDemo : ViewBase
                 .Builder(p => p.Title, f => f.Text())
                 .Builder(p => p.Author, f => f.Text())
                 .Builder(p => p.Year, f => f.Default())
-           | downloadBtn | new Button("Delete All Records").HandleClick(_ => HandleDelete(booksState, filePath, client))
+           | downloadBtn | new Button("Delete All Records").HandleClick(_ => HandleDeleteAsync(booksState, filePath, client))
             .Loading(loading).Disabled(loading)
-           | formView | new Button("Save Book").HandleClick(_ => HandleSubmit(booksState, client, book, onSubmit))
+           | formView | new Button("Save Book").HandleClick(async _ => await HandleSubmitAsync(booksState, client, book, onSubmit))
                     .Loading(loading).Disabled(loading)
                 | validationView;
 
@@ -71,93 +75,83 @@ public class EEPlusDemo : ViewBase
     }
 
     #region Handle
-    async ValueTask HandleSubmit(IState<List<Book>> booksState, IClientProvider client, IState<Book> book, Func<Task<bool>> onSubmit)
+    async ValueTask HandleSubmitAsync(IState<List<Book>> booksState, IClientProvider client, IState<Book> book, Func<Task<bool>> onSubmit)
     {
-        if (await onSubmit())
+        try
         {
-            var filePath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "books.xlsx");
-
-            // Ensure file exists
-            if (!File.Exists(filePath))
+            if (await onSubmit())
             {
-                using var package = new ExcelPackage();
-                package.Workbook.Worksheets.Add("Books");
-                package.SaveAs(new FileInfo(filePath));
-            }
+                var filePath = GetExcelFilePath();
+                EnsureExcelFileExists(filePath);
 
-            using (var package = new ExcelPackage(new FileInfo(filePath)))
-            {
-                var ws = package.Workbook.Worksheets[0];
-
-                // Calculate next row
-                int nextRow;
-                if (ws.Dimension == null)
+                using (var package = new ExcelPackage(new FileInfo(filePath)))
                 {
-                    // Sheet is empty → start at row 2 (row 1 is header)
-                    nextRow = 2;
+                    var ws = package.Workbook.Worksheets[0];
+                    int nextRow = ws.Dimension == null ? 2 : ws.Dimension.End.Row + 1;
+                    var bookRecord = new Book(book.Value.Title, book.Value.Author, book.Value.Year);
+
+                    ws.Cells[nextRow, 1].Value = (nextRow - 1).ToString();
+                    ws.Cells[nextRow, 2].Value = bookRecord.Title;
+                    ws.Cells[nextRow, 3].Value = bookRecord.Author;
+                    ws.Cells[nextRow, 4].Value = bookRecord.Year;
+                    ws.Cells[1, 1, nextRow, 4].AutoFitColumns();
+
+                    package.Save();
                 }
-                else
-                {
-                    nextRow = ws.Dimension.End.Row + 1;
-                }
-                var bookRecord = new Book(book.Value.Title, book.Value.Author, book.Value.Year);
 
-                ws.Cells[nextRow, 1].Value = (nextRow - 1).ToString(); // ID
-                ws.Cells[nextRow, 2].Value = bookRecord.Title;
-                ws.Cells[nextRow, 3].Value = bookRecord.Author;
-                ws.Cells[nextRow, 4].Value = bookRecord.Year;
-
-                ws.Cells[1, 1, nextRow, 4].AutoFitColumns();
-
-                package.Save();
+                booksState.Value = ExcelManipulation.ReadExcel();
+                book.Value = new Book();
+                client.Toast("Book added!");
             }
         }
-
-        // refresh reactive books list
-        booksState.Value = ExcelManipulation.ReadExcel();
-
-        // clear the form state (reset book model)
-        book.Value = new Book();
-        client.Toast("Book added!");
+        catch (IOException ex)
+        {
+            client.Toast($"File access error. Please try again. Technical error: {ex.Message}");
+            // Log ex.Message or ex.ToString() as needed
+        }
+        catch (Exception ex)
+        {
+            client.Toast($"An unexpected error occurred. Technical error: {ex.Message}");
+            // Log ex.Message or ex.ToString() as needed
+        }
     }
-    void HandleDelete(IState<List<Book>> booksState, string filePath, IClientProvider client)
+
+    void HandleDeleteAsync(IState<List<Book>> booksState, string filePath, IClientProvider client)
     {
-
-        if (!File.Exists(filePath))
+        try
         {
-            // Nothing to clear
-            client.Toast("No Excel file found to clear.");
-            return;
+            EnsureExcelFileExists(filePath);
+
+            using var package = new ExcelPackage(new FileInfo(filePath));
+            var ws = package.Workbook.Worksheets.FirstOrDefault();
+            if (ws == null)
+            {
+                client.Toast("Worksheet not found.");
+                return;
+            }
+
+            var lastRow = ws.Dimension?.End.Row ?? 0;
+            if (lastRow <= 1)
+            {
+                client.Toast("No records to clear.");
+                return;
+            }
+
+            ws.DeleteRow(2, lastRow - 1);
+            ws.Cells[1, 1, 1, 4].AutoFitColumns();
+            package.Save();
+
+            client.Toast("All records cleared.");
+            booksState.Value = ExcelManipulation.ReadExcel();
         }
-
-
-        using var package = new ExcelPackage(new FileInfo(filePath));
-        var ws = package.Workbook.Worksheets.FirstOrDefault();
-        if (ws == null)
+        catch (IOException ex)
         {
-            client.Toast("Worksheet not found.");
-            return;
+            client.Toast($"File access error. Please try again. Technical error: {ex.Message}");
         }
-
-        // If there is no data (only headers or empty)
-        var lastRow = ws.Dimension?.End.Row ?? 0;
-        if (lastRow <= 1)
+        catch (Exception ex)
         {
-            client.Toast("No records to clear.");
-            return;
+            client.Toast($"An unexpected error occurred. Technical error: {ex.Message}");
         }
-
-        // Clear rows 2..lastRow (keep header in row 1)
-        ws.DeleteRow(2, lastRow - 1);
-
-        //autosize columns after deletion
-        ws.Cells[1, 1, 1, 4].AutoFitColumns();
-
-        package.Save();
-
-        client.Toast("All records cleared.");
-        // refresh reactive books list
-        booksState.Value = ExcelManipulation.ReadExcel();
     }
     #endregion Handle
 

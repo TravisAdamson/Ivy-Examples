@@ -7,7 +7,10 @@ public static class ExcelManipulation
     //using the EPPlus library to generate an Excel file
     public static void WriteExcel(IState<List<Book>> booksState)
     {
-        var books = new[]
+        Book[] books = booksState.Value.ToArray();
+        if (books is null || books.Count() == 0)
+        {
+            books = new[]
      {
             new Book("The Great Gatsby", "F. Scott Fitzgerald", 1925),
             new Book("To Kill a Mockingbird", "Harper Lee", 1960),
@@ -15,6 +18,7 @@ public static class ExcelManipulation
             new Book("Pride and Prejudice", "Jane Austen", 1813),
             new Book("The Catcher in the Rye", "J.D. Salinger", 1951)
         };
+        }
         //Creating an instance of ExcelPackage
         ExcelPackage excel = new ExcelPackage();
 
