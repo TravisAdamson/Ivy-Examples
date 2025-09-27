@@ -209,7 +209,7 @@ public class RestsharpApp : ViewBase
             }
             catch
             {
-                // ignoring unvalid json
+                // ignoring invalid json
             }
         }
         return input;
