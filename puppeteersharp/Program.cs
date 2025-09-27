@@ -20,10 +20,7 @@ Console.WriteLine("Download complete. Running App..");
 
 server.UseBuilder(builder =>
 {
-    builder.Services.AddSingleton<IStartupFilter>(
-        new AssetsStaticFilesStartupFilter(
-            "/assets",
-            System.IO.Path.Combine(AppContext.BaseDirectory, "Assets")));
+    builder.Services.AddSingleton<IStartupFilter, DownloadEndpointStartupFilter>();
 });
 
 await server.RunAsync();

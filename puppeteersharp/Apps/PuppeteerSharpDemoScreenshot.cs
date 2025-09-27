@@ -69,17 +69,15 @@ namespace PuppeteerSharpDemo
                 using var page = await browser.NewPageAsync();
                 await page.GoToAsync(inputUrl);
 
-                var folder = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "screenshots");
-                Directory.CreateDirectory(folder);
                 var fileName = $"screenshot-{Guid.NewGuid().ToString("N")}.png";
-                var path = System.IO.Path.Combine(folder, fileName);
 
                 var bytes = await page.ScreenshotDataAsync(new ScreenshotOptions { FullPage = true });
-                File.WriteAllBytes(path, bytes);   // <-- actually writes the file
+                var id = MemoryFileStore.Add(bytes, "image/png", fileName);
 
-                var downloadUrl = $"http://localhost:5010/assets/screenshots/{fileName}?download=1";
+                // URL for browser download
+                var downloadUrl = $"/download/{id}";
                 screenshotPath.Set(downloadUrl);
-                
+
 
             }
             catch (Exception ex)

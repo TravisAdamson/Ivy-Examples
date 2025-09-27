@@ -67,19 +67,18 @@ namespace PuppeteerSharpDemo.Apps
                 using var page = await browser.NewPageAsync();
                 await page.GoToAsync(target);
 
-                var folder = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "pdfs");
-                Directory.CreateDirectory(folder);
-
                 var fileName = $"page-{Guid.NewGuid().ToString("N")}.pdf";
-                var path = System.IO.Path.Combine(folder, fileName);
 
-                await page.PdfAsync(path, new PdfOptions
+                var bytes = await page.PdfDataAsync(new PdfOptions
                 {
                     Format = PaperFormat.A4,
                     PrintBackground = true
                 });
 
-                var downloadUrl = $"http://localhost:5010/assets/pdfs/{fileName}?download=1";
+                var id = MemoryFileStore.Add(bytes, "application/pdf", fileName);
+
+                // URL for browser download
+                var downloadUrl = $"/download/{id}";
                 pdfPath.Set(downloadUrl);
             }
             catch (Exception ex)
