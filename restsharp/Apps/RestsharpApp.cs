@@ -15,9 +15,6 @@ public class RestsharpApp : ViewBase
         var headerValueTemp = UseState<string>(() => string.Empty);
         var headers = UseState(ImmutableArray.Create<HeaderItem>());
 
-        _ = int.TryParse(url.Value, out var amountInt);
-        if (amountInt < 0) amountInt = -amountInt;
-        var today = DateTime.Today;
 
         var addHeader = (Event<Button> e) =>
         {
