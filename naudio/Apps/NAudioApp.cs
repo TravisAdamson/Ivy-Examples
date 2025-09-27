@@ -6,81 +6,51 @@ public class NAudioApp : ViewBase
 {
     public override object? Build()
     {
-        var frequencyState = UseState(440);
-
-        var fileInputState = UseState<FileInput?>((FileInput?)null);
-        var selected = fileInputState.Value?.Name;
-
-        var uploadedAudioBytes = UseState<byte[]?>((byte[]?)null);
-        var resultingAudioBytes = UseState<byte[]?>((byte[]?)null);
-
-        var uploadUrl = this.UseUpload(
-            fileBytes =>
-            {
-                Console.WriteLine($"Upload triggered with {fileBytes?.Length ?? 0} bytes");
-                try
-                {
-                    uploadedAudioBytes.Value = fileBytes;
-                    resultingAudioBytes.Value = null;
-                    Console.WriteLine($"Successfully set uploaded audio bytes: {fileBytes?.Length ?? 0}");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Upload error: {ex.Message}");
-                    uploadedAudioBytes.Value = null;
-                }
-            },
-            "audio/*",
-            "uploaded-audio"
-        );
+        var frequencyState = UseState(100);
+        var durationState = UseState(4);
+        var volumeState = UseState(0.8f);
 
         var downloadUrl = this.UseDownload(() =>
         {
-            var bytes = resultingAudioBytes.Value;
+            var bytes = GenerateTone(frequencyState.Value, durationState.Value, volumeState.Value);
+
             return bytes;
-        }, "audio/*", "audio.wav");
+        }, "audio/wav", $"tone_generated_by_naudio.wav");
 
-        var handleGenerateTone = () =>
-        {
-            Console.WriteLine("starting handle generate tone");
-            resultingAudioBytes.Value = GenerateTone(frequencyState.Value, 3);
-            Console.WriteLine("finished handle generate tone, resulting audio bytes: " + resultingAudioBytes.Value?.Length);
-        };
-
-        return Layout.Vertical().Gap(4).Padding(3)
+        return Layout.Vertical().Gap(4).Padding(3).Width(Size.Units(200).Max(800))
                | new Card(Layout.Vertical().Gap(4).Padding(3)
                     | Text.H2("NAudio Demo")
-                    | Text.Muted("NAudio is a library for audio processing.")
-                    | (Layout.Horizontal().Width(Size.Full())
-                        // Upload section
-                        // | fileInputState.ToFileInput(uploadUrl, "Choose wave file to convert to MP3")
-                        // | Text.Large(selected)
+                    | Text.Muted("NAudio is a library for audio processing. Fill in the form and click generate to download a custom tone.")
+                    | new Separator()
+                    | (Layout.Vertical().Padding(5).Width(Size.Full())
+                        | Text.Label("Frequency")
+                        | new NumberInput<int>(frequencyState, placeholder: "Frequency")
+                            .Min(50)
+                            .Max(1000)
+                            .Variant(NumberInputs.Slider)
 
-                        // Generate tone section
-                        | new NumberInput<int>(
-                            frequencyState.Value,
-                            e =>
-                            {
-                                frequencyState.Set(e);
-                            })
-                        .Min(50)
-                        .Max(1000)
-                        .Step(1)
-                        .Variant(NumberInputs.Slider)
+                        | Text.Label("Duration")
+                        | new NumberInput<int>(durationState)
+                            .Min(1)
+                            .Max(10)
+                            .Variant(NumberInputs.Slider)
 
-                        | new Button("Generate").HandleClick(handleGenerateTone)
-                        .Icon(Icons.AudioWaveform)
+                        | Text.Label("Volume")
+                        | new NumberInput<float>(volumeState)
+                            .Min(0)
+                            .Max(1)
+                            .Step(0.01)
+                            .Variant(NumberInputs.Slider)
 
-                        // Download section
-                        | new Button("Download").Primary().Url(downloadUrl.Value).Icon(Icons.Download)
+                        | new Separator()
+                        | (Layout.Horizontal().Width(Size.Full())
+                            | new Button("Generate & Download").Url(downloadUrl.Value).Icon(Icons.AudioWaveform).Primary())
                     )
-               )
-                    .Width(Size.Full());
+               );
     }
 
-    private static byte[] GenerateTone(int frequency, int durationSeconds = 2)
+    private static byte[] GenerateTone(int frequency, int durationSeconds = 2, float volume = 0.2f)
     {
-        Console.WriteLine($"[GenerateTone] Starting generation of tone at {frequency}Hz for {durationSeconds} seconds");
         try
         {
             var waveFormat = new WaveFormat(44100, 16, 1);
@@ -89,7 +59,7 @@ public class NAudioApp : ViewBase
             {
                 Type = SignalGeneratorType.Sin,
                 Frequency = frequency,
-                Gain = 0.2
+                Gain = volume
             }.Take(TimeSpan.FromSeconds(durationSeconds));
 
             using (var outputStream = new MemoryStream())
@@ -104,13 +74,12 @@ public class NAudioApp : ViewBase
                     writer.Write(buffer, 0, totalBytes);
                 }
 
-                Console.WriteLine($"[GenerateTone] finished generating tone");
                 return outputStream.ToArray();
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[GenerateTone] ERROR: {ex.Message}");
+            Console.Error.WriteLine($"[GenerateTone] ERROR: {ex.Message}");
             return Array.Empty<byte>();
         }
     }
