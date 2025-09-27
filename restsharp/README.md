@@ -7,10 +7,10 @@ This is an interactive Ivy demo application showcasing Restsharp (Simple REST an
 This demo application demonstrates the core features of Restsharp (working with rest Api's):
 
 - Call a rest api with Get, Post, Put, Patch and Delete methods
-- Assing the reuest headers
-- Assugb the request body
-- Show the response and statuse code
-- Formating text as json
+- Assign the request headers
+- Assign the request body
+- Show the response and status code
+- Formatting text as json
 
 
 
