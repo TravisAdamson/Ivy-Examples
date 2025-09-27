@@ -12,9 +12,6 @@
   <ItemGroup>
     <EmbeddedResource Include="Assets/**/*" />
   </ItemGroup>
-
-  
-  
   <ItemGroup>
     <PackageReference Include="EPPlus" Version="8.2.0" />
     <PackageReference Include="Ivy" Version="1.0.113.0" />
