@@ -42,7 +42,7 @@ public class SimMetricsNetDemoApp : ViewBase
                     | inputMetric.ToSelectInput(typeof(SimMetricType).ToOptions())
                 ).Description("Input a string and then select the SimMetrics>net function to compute")
             | (longDescription.Value != string.Empty ? Text.Muted(longDescription) : null)
-            | nameList.Value.ToTable().Header(x=> x.Score, shortDescription.Value);
+            | nameList.Value.ToTable().Header(x => x.Score, shortDescription.Value);
     }
 
     internal record NameSimilarity(string Name, double Score);
