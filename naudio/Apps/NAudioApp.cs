@@ -6,6 +6,8 @@ public class NAudioApp : ViewBase
 {
     public override object? Build()
     {
+        var frequencyState = UseState(440);
+
         var fileInputState = UseState<FileInput?>((FileInput?)null);
         var selected = fileInputState.Value?.Name;
 
@@ -34,22 +36,40 @@ public class NAudioApp : ViewBase
 
         var downloadUrl = this.UseDownload(() =>
         {
-            // var bytes = resultingAudioBytes.Value;
-
-            var bytes = GenerateTone(440, 2);
+            var bytes = resultingAudioBytes.Value;
             return bytes;
         }, "audio/*", "audio.wav");
 
+        var handleGenerateTone = () =>
+        {
+            Console.WriteLine("starting handle generate tone");
+            resultingAudioBytes.Value = GenerateTone(frequencyState.Value, 3);
+            Console.WriteLine("finished handle generate tone, resulting audio bytes: " + resultingAudioBytes.Value?.Length);
+        };
 
         return Layout.Vertical().Gap(4).Padding(3)
                | new Card(Layout.Vertical().Gap(4).Padding(3)
                     | Text.H2("NAudio Demo")
                     | Text.Muted("NAudio is a library for audio processing.")
                     | (Layout.Horizontal().Width(Size.Full())
-
                         // Upload section
                         // | fileInputState.ToFileInput(uploadUrl, "Choose wave file to convert to MP3")
                         // | Text.Large(selected)
+
+                        // Generate tone section
+                        | new NumberInput<int>(
+                            frequencyState.Value,
+                            e =>
+                            {
+                                frequencyState.Set(e);
+                            })
+                        .Min(50)
+                        .Max(1000)
+                        .Step(1)
+                        .Variant(NumberInputs.Slider)
+
+                        | new Button("Generate").HandleClick(handleGenerateTone)
+                        .Icon(Icons.AudioWaveform)
 
                         // Download section
                         | new Button("Download").Primary().Url(downloadUrl.Value).Icon(Icons.Download)
@@ -84,6 +104,7 @@ public class NAudioApp : ViewBase
                     writer.Write(buffer, 0, totalBytes);
                 }
 
+                Console.WriteLine($"[GenerateTone] finished generating tone");
                 return outputStream.ToArray();
             }
         }
