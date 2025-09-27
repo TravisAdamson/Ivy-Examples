@@ -6,13 +6,13 @@ namespace PuppeteerSharpDemo.Apps
     public class PuppeteerSharpDemoPdf : ViewBase
     {
         private IState<string> url = null!;
-        private IState<string> message = null!;
+        private IState<string?> pdfPath = null!;
         private IState<bool> isLoading = null!;
 
         public override object? Build()
         {
             url = this.UseState("");
-            message = this.UseState("No PDF generated yet.");
+            pdfPath = this.UseState("");
             isLoading = this.UseState(false);
 
             return new Card()
@@ -21,7 +21,6 @@ namespace PuppeteerSharpDemo.Apps
             | Layout.Vertical(
                 RenderUrlInput(),
                 RenderGenerateButton(),
-                new Separator(),
                 RenderStatus()
             );
         }
@@ -32,27 +31,35 @@ namespace PuppeteerSharpDemo.Apps
                 url.ToTextInput(placeholder: "https://example.com").Width(Size.Full())
             );
 
-        private IWidget RenderGenerateButton() =>
-            new Button("Generate PDF", async _ => await GeneratePdf())
-                .Icon(Icons.FileText)
-                .Variant(ButtonVariant.Primary)
-                .Width(Size.Full());
+        private IWidget RenderGenerateButton(){
+            var client = this.UseService<IClientProvider>();
+
+            return new Button("Generate PDF", async _ =>
+            {
+                await GeneratePdf();
+                client.OpenUrl(pdfPath.Value);
+            })
+            .Icon(Icons.FileText)
+            .Variant(ButtonVariant.Primary)
+            .Width(Size.Full());
+        }
 
         private IView RenderStatus() =>
             isLoading.Value
                 ? Text.Muted("Generating PDF...")
-                : Text.Muted(message.Value);
+                : Text.Muted("");
 
         private async Task GeneratePdf()
         {
             var target = (url.Value ?? "").Trim();
             if (string.IsNullOrEmpty(target))
             {
-                message.Set("Please enter a valid URL.");
+                pdfPath.Set("Please enter a valid URL.");
                 return;
             }
 
             isLoading.Set(true);
+            pdfPath.Set(string.Empty);
 
             try
             {
@@ -72,11 +79,12 @@ namespace PuppeteerSharpDemo.Apps
                     PrintBackground = true
                 });
 
-                message.Set($"PDF saved as: {path}");
+                var downloadUrl = $"http://localhost:5010/assets/pdfs/{fileName}?download=1";
+                pdfPath.Set(downloadUrl);
             }
             catch (Exception ex)
             {
-                message.Set($"Error: {ex.Message}");
+                pdfPath.Set($"Error: {ex.Message}");
             }
             finally
             {

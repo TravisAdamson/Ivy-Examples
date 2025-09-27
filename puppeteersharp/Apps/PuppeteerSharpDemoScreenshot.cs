@@ -1,3 +1,5 @@
+using System.Buffers.Text;
+
 namespace PuppeteerSharpDemo
 {
     [App(icon: Icons.Image)]
@@ -21,23 +23,9 @@ namespace PuppeteerSharpDemo
                 | Layout.Vertical(
                 RenderUrlInput(),
                 RenderCaptureButton(),
-                new Separator(),
-                RenderStatus(),
-                RenderScreenshot()
+                RenderStatus()
             );
         }
-
-        private IView RenderScreenshot()
-        {
-            if (!string.IsNullOrEmpty(screenshotPath.Value))
-            {
-                return Text.Muted($"Screenshot saved at: {screenshotPath.Value}");
-            }
-
-            return Text.Muted(string.Empty);
-        }
-
-        // --- UI parts ---
 
         private IView RenderUrlInput() =>
             Layout.Vertical(
@@ -45,11 +33,19 @@ namespace PuppeteerSharpDemo
                 url.ToTextInput(placeholder: "https://example.com").Width(Size.Full())
             );
 
-        private IWidget RenderCaptureButton() =>
-            new Button("Capture Screenshot", async _ => await CaptureScreenshot())
-                .Icon(Icons.Camera)
-                .Variant(ButtonVariant.Primary)
-                .Width(Size.Full());
+        private IWidget RenderCaptureButton()
+        {
+            var client = this.UseService<IClientProvider>();
+
+            return new Button("Capture Screenshot", async _ =>
+            {
+                await CaptureScreenshot();
+                client.OpenUrl(screenshotPath.Value);
+            })
+            .Icon(Icons.Camera)
+            .Variant(ButtonVariant.Primary)
+            .Width(Size.Full());
+        }
 
         private IView RenderStatus() =>
             isLoading.Value
@@ -81,7 +77,9 @@ namespace PuppeteerSharpDemo
                 var bytes = await page.ScreenshotDataAsync(new ScreenshotOptions { FullPage = true });
                 File.WriteAllBytes(path, bytes);   // <-- actually writes the file
 
-                screenshotPath.Set(path);
+                var downloadUrl = $"http://localhost:5010/assets/screenshots/{fileName}?download=1";
+                screenshotPath.Set(downloadUrl);
+                
 
             }
             catch (Exception ex)

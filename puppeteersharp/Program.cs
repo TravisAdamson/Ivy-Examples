@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Hosting;
+using PuppeteerSharpDemo;
+
 CultureInfo.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("en-US");
 var server = new Server();
 #if DEBUG
@@ -5,10 +8,7 @@ server.UseHotReload();
 #endif
 server.AddAppsFromAssembly();
 server.AddConnectionsFromAssembly();
-var chromeSettings = new ChromeSettings()
-
-    .UseTabs(preventDuplicates: true)
-    ;
+var chromeSettings = new ChromeSettings().UseTabs(preventDuplicates: true);
 
 server.UseChrome(chromeSettings);
 var fetcher = new BrowserFetcher();
@@ -17,5 +17,13 @@ Console.WriteLine("Downloading Browser... This may take a while depending on you
 await fetcher.DownloadAsync();
 
 Console.WriteLine("Download complete. Running App..");
+
+server.UseBuilder(builder =>
+{
+    builder.Services.AddSingleton<IStartupFilter>(
+        new AssetsStaticFilesStartupFilter(
+            "/assets",
+            System.IO.Path.Combine(AppContext.BaseDirectory, "Assets")));
+});
 
 await server.RunAsync();
