@@ -1,13 +1,17 @@
 # Ivy Example – ZString
 
-This is a demo Ivy application showcasing usage of [Cysharp.ZString](https://github.com/Cysharp/ZString).
+This example demonstrates the usage of **Cysharp.ZString** inside an Ivy application for high-performance string operations in .NET.
 
-## Features
-- `ZString.Concat`, `ZString.Format`, `ZString.Join`
+The demo shows **both the inputs and the outputs** for:
+
+- `ZString.Concat`
+- `ZString.Format`
+- `ZString.Join`
 - `ZString.CreateStringBuilder()`
 - `ZString.PrepareUtf16<>`
 
-## Run
+## Run Locally
+
 ```bash
 dotnet restore
 dotnet watch --browse
