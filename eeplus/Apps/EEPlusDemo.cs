@@ -55,13 +55,13 @@ public class EEPlusDemo : ViewBase
 
         return Layout.Vertical()
             | Text.H2("EEPlus Software Demo") |
-                   new Button("Generate Excel File").HandleClick(async _ => ExcelManipulation.WriteExcel(booksState)).Loading(loading).Disabled(loading)
+                   new Button("Generate Excel File").HandleClick(_ => ExcelManipulation.WriteExcel(booksState)).Loading(loading).Disabled(loading)
             | booksState.Value.ToTable()
                .Width(Size.Full())
                 .Builder(p => p.Title, f => f.Text())
                 .Builder(p => p.Author, f => f.Text())
                 .Builder(p => p.Year, f => f.Default())
-           | downloadBtn | new Button("Delete All Records").HandleClick(async _ => HandleDelete(booksState, filePath, client))
+           | downloadBtn | new Button("Delete All Records").HandleClick(_ => HandleDelete(booksState, filePath, client))
             .Loading(loading).Disabled(loading)
            | formView | new Button("Save Book").HandleClick(_ => HandleSubmit(booksState, client, book, onSubmit))
                     .Loading(loading).Disabled(loading)
@@ -120,7 +120,7 @@ public class EEPlusDemo : ViewBase
         book.Value = new Book();
         client.Toast("Book added!");
     }
-    async ValueTask HandleDelete(IState<List<Book>> booksState, string filePath, IClientProvider client)
+    void HandleDelete(IState<List<Book>> booksState, string filePath, IClientProvider client)
     {
 
         if (!File.Exists(filePath))

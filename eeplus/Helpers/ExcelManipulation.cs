@@ -5,7 +5,7 @@ namespace EEPlusSoftware.Helpers;
 public static class ExcelManipulation
 {
     //using the EPPlus library to generate an Excel file
-    public static async ValueTask WriteExcel(IState<List<Book>> booksState)
+    public static void WriteExcel(IState<List<Book>> booksState)
     {
         var books = new[]
      {
@@ -76,8 +76,8 @@ public static class ExcelManipulation
     //using the EEPlus library to read an Excel file
     public static List<Book> ReadExcel()
     {
-        string filePath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "books.xlsx");
         string _fileName = "books.xlsx";
+        string filePath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), _fileName);
         var RESOURCES_WORKSHEET = 0;
         //Creating an instance of ExcelPackage
         using (FileStream fileStream = new FileStream(filePath, FileMode.Open))
