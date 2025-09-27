@@ -41,7 +41,7 @@ public class SimMetricsNetDemoApp : ViewBase
                     | new TextInput(inputString).Placeholder("Input a name here...")
                     | inputMetric.ToSelectInput(typeof(SimMetricType).ToOptions())
                 ).Description("Input a string and then select the SimMetrics>net function to compute")
-            | (longDescription.Value != string.Empty? Text.Muted(longDescription):null)
+            | (longDescription.Value != string.Empty ? Text.Muted(longDescription) : null)
             | nameList.Value.ToTable().Header(x=> x.Score, shortDescription.Value);
     }
 
