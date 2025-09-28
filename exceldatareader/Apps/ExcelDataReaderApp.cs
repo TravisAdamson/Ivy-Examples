@@ -71,7 +71,7 @@ public class ExcelDataReaderApp : ViewBase
         var displayUsers = UseState(() => new List<User>());
         var isImport = UseState(false);
         var isDelete = UseState(false);
-        var page = UseState(0);
+        var page = UseState(1);
         var totalPage = UseState(0); ;
         var client = UseService<IClientProvider>();
 
