@@ -7,14 +7,14 @@ public class ExcelDataReaderApp : ViewBase
 {
     public record User
     {
-        public string ID { get; set; }
-        public string Name { get; set; }
-        public string Email { get; set; }
-        public string PhoneNumber { get; set; }
-        public string Address { get; set; }
-        public string Gender { get; set; }
-        public string Department { get; set; }
-        public string Level { get; set; }
+        public string? ID { get; set; }
+        public string? Name { get; set; }
+        public string? Email { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string? Address { get; set; }
+        public string? Gender { get; set; }
+        public string? Department { get; set; }
+        public string? Level { get; set; }
     }
 
 
@@ -102,19 +102,26 @@ public class ExcelDataReaderApp : ViewBase
                         }
                     });
                     // Convert Data to List<User> 
-                    users.Value = result?.Tables[0].AsEnumerable().Select(u => new User
+                    if (result != null && result.Tables.Count > 0)
                     {
-                        ID = u.Field<string>("ID"),
-                        Name = u.Field<string>("Name"),
-                        Email = u.Field<string>("Email"),
-                        PhoneNumber = u.Field<string>("Phone Number"),
-                        Address = u.Field<string>("Address"),
-                        Gender = u.Field<string>("Gender"),
-                        Department = u.Field<string>("Department"),
-                        Level = u.Field<string>("Level")
-
-
-                    }).ToList();
+                        users.Value = result.Tables[0].AsEnumerable()
+                            .Select(u => new User
+                            {
+                                ID = u.Field<string>("ID"),
+                                Name = u.Field<string>("Name"),
+                                Email = u.Field<string>("Email"),
+                                PhoneNumber = u.Field<string>("Phone Number"),
+                                Address = u.Field<string>("Address"),
+                                Gender = u.Field<string>("Gender"),
+                                Department = u.Field<string>("Department"),
+                                Level = u.Field<string>("Level")
+                            })
+                            .ToList();
+                    }
+                    else
+                    {
+                        users.Value = new List<User>();
+                    }
                     // devide data to display on the screen, using pagination.
                     (totalPage.Value, displayUsers.Value) = PaginationValue(page.Value, 20, users.Value);
                     // Reset "Import" button and dislay alert
