@@ -72,7 +72,7 @@ public class ExcelDataReaderApp : ViewBase
         var isImport = UseState(false);
         var isDelete = UseState(false);
         var page = UseState(1);
-        var totalPage = UseState(0); ;
+        var totalPage = UseState(0);
         var client = UseService<IClientProvider>();
 
         // re-render when users, totalPager, or page change value
