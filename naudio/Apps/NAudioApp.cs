@@ -1,7 +1,7 @@
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 
-[App(icon: Icons.PartyPopper, title: "NAudio Demo")]
+[App(icon: Icons.AudioLines, title: "NAudio Demo")]
 public class NAudioApp : ViewBase
 {
     public override object? Build()
@@ -44,7 +44,7 @@ public class NAudioApp : ViewBase
 
                         | new Separator()
                         | (Layout.Horizontal().Width(Size.Full())
-                            | new Button("Generate & Download").Url(downloadUrl.Value).Icon(Icons.AudioWaveform).Primary())
+                            | new Button("Generate & Download").Url(downloadUrl.Value).Icon(Icons.AudioLines).Primary())
                     )
                );
     }
