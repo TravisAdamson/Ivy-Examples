@@ -90,6 +90,7 @@ jobs:
               echo "ℹ️ No changes to version tracking file"
             fi
           fi
+          
 
   discover-projects:
     name: Discover Projects
