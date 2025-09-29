@@ -114,7 +114,6 @@ jobs:
               echo "ℹ️ No changes to version tracking file"
             fi
           fi
-
   discover-projects:
     name: Discover Projects
     runs-on: ubuntu-latest
@@ -124,12 +123,10 @@ jobs:
       projects: ${{ steps.find-projects.outputs.projects }}
       project-count: ${{ steps.find-projects.outputs.project-count }}
     steps:
-            - name: Checkout code on branch
+      - name: Checkout code on branch
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
-
-
 
       - name: Find all .NET projects
         id: find-projects
@@ -156,11 +153,6 @@ jobs:
           # Count projects
           project_count=$(echo "$projects" | wc -l)
           
-          echo "Found $project_count projects:"
-          echo "$projects"
-          
-          echo "projects=$project_array" >> $GITHUB_OUTPUT
-          echo "project-count=$project_count" >> $GITHUB_OUTPUT
 
   build-projects:
     name: Build
