@@ -25,8 +25,11 @@ jobs:
       latest-version: ${{ steps.version-check.outputs.latest-version }}
       version-changed: ${{ steps.version-check.outputs.version-changed }}
     steps:
-      - name: Checkout code
+            - name: Checkout code on branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -122,8 +125,11 @@ jobs:
       projects: ${{ steps.find-projects.outputs.projects }}
       project-count: ${{ steps.find-projects.outputs.project-count }}
     steps:
-      - name: Checkout code
+            - name: Checkout code on branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
 
       - name: Find all .NET projects
         id: find-projects
@@ -167,8 +173,11 @@ jobs:
         project: ${{ fromJson(needs.discover-projects.outputs.projects) }}
     
     steps:
-      - name: Checkout code
+           - name: Checkout code on branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -215,8 +224,11 @@ jobs:
     outputs:
       resolved-version: ${{ steps.get-version.outputs.resolved-version }}
     steps:
-      - name: Checkout code
+           - name: Checkout code on branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
