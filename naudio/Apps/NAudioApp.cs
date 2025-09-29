@@ -24,7 +24,7 @@ public class NAudioApp : ViewBase
                     | new Separator()
                     | (Layout.Vertical().Padding(5).Width(Size.Full())
                         | Text.Label("Frequency")
-                        | new NumberInput<int>(frequencyState, placeholder: "Frequency")
+                        | new NumberInput<int>(frequencyState)
                             .Min(50)
                             .Max(1000)
                             .Variant(NumberInputs.Slider)
