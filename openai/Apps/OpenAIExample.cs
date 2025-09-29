@@ -43,10 +43,6 @@ namespace OpenAIExample.Apps
                     ChatCompletion completion = await _aiClient.CompleteChatAsync(@event.Value);
                     string aiResponse = completion.Content[0].Text;
 
-                    // Simulate delay for demonstration purposes (optional)
-                    //await Task.Delay(2000);
-                    //string aiResponse = $"(Mock) I waited 2 seconds before replying to: {@event.Value}";
-
                     // Replace "Thinking..." with actual response
                     messages.Set(currentMessages.Add(new Ivy.ChatMessage(ChatSender.Assistant, aiResponse)));
                 }
@@ -59,6 +55,5 @@ namespace OpenAIExample.Apps
             return Layout.Center().Padding(0, 10, 0, 10)
             | new Chat(messages.Value.ToArray(), HandleMessageAsync).Width(Size.Full().Max(200));
         }
-        
     }
 }
