@@ -78,7 +78,7 @@ jobs:
           echo "version-changed=$version_changed" >> $GITHUB_OUTPUT
 
       - name: Commit version tracking file
-        if: (github.repository == 'Ivy-Interactive/Ivy-Examples') && (steps.version-check.outputs.version-changed == 'true' || github.event_name != 'schedule')
+        if: github.repository == 'Ivy-Interactive/Ivy-Examples' && (steps.version-check.outputs.version-changed == 'true' || github.event_name != 'schedule')
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
