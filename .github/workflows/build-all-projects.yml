@@ -25,11 +25,11 @@ jobs:
       latest-version: ${{ steps.version-check.outputs.latest-version }}
       version-changed: ${{ steps.version-check.outputs.version-changed }}
     steps:
-      - name: Checkout code on branch
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
           ref: ${{ github.head_ref || github.ref_name }}
-          repository: ${{ github.repository }}
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -103,11 +103,11 @@ jobs:
       projects: ${{ steps.find-projects.outputs.projects }}
       project-count: ${{ steps.find-projects.outputs.project-count }}
     steps:
-      - name: Checkout code on branch
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
           ref: ${{ github.head_ref || github.ref_name }}
-          repository: ${{ github.repository }}
 
       - name: Find all .NET projects
         id: find-projects
@@ -139,11 +139,11 @@ jobs:
       matrix:
         project: ${{ fromJson(needs.discover-projects.outputs.projects) }}
     steps:
-      - name: Checkout code on branch
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
           ref: ${{ github.head_ref || github.ref_name }}
-          repository: ${{ github.repository }}
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -190,11 +190,11 @@ jobs:
     outputs:
       resolved-version: ${{ steps.get-version.outputs.resolved-version }}
     steps:
-      - name: Checkout code on branch
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
           ref: ${{ github.head_ref || github.ref_name }}
-          repository: ${{ github.repository }}
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
