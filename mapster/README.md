@@ -14,7 +14,7 @@ The app includes:
 
 ## Screenshot
 
-![Mapster Demo](screenshots/Mapster-Working-Demo.png)
+![Mapster Demo](Screenshots/Mapster-Working-Demo.png)
 
 ## How It Works
 
