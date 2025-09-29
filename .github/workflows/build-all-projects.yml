@@ -25,11 +25,10 @@ jobs:
       latest-version: ${{ steps.version-check.outputs.latest-version }}
       version-changed: ${{ steps.version-check.outputs.version-changed }}
     steps:
-            - name: Checkout code on branch
+      - name: Checkout code on branch
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
-
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -48,7 +47,7 @@ jobs:
           current_version="wildcard"
           version_changed="false"
           should_build="false"
-          
+
           # For scheduled runs, check if there's a new version since last run
           if [ "${{ github.event_name }}" == "schedule" ]; then
             echo "📅 Scheduled run - checking for Ivy version updates..."
