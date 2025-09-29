@@ -7,7 +7,8 @@ on:
     branches: [ main, develop ]
   workflow_dispatch: # Allow manual triggering
   schedule:
-    - cron: '0 6 * * *' # Check for new Ivy versions daily at 6 AM UTC
+    # Check for new Ivy versions daily at 6 AM UTC
+    - cron: '0 6 * * *'
 
 env:
   DOTNET_VERSION: '9.0.x'
@@ -27,7 +28,8 @@ jobs:
       - name: Checkout code on branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.ref_name }}
+          repository: ${{ github.repository }}
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -52,10 +54,11 @@ jobs:
               last_known_version=$(cat "$last_known_version_file")
               echo "Last known Ivy version: $last_known_version"
             else
-              echo "No previous version record found - will build to establish baseline"
+              echo "No previous version record found"
             fi
+
             if [ -z "$last_known_version" ] || [ "$last_known_version" != "$latest_version" ]; then
-              echo "🆕 New Ivy version detected! ($last_known_version → $latest_version)"
+              echo "🆕 New Ivy version detected!"
               should_build="true"
               version_changed="true"
               echo "$latest_version" > "$last_known_version_file"
@@ -90,7 +93,6 @@ jobs:
               echo "ℹ️ No changes to version tracking file"
             fi
           fi
-          
 
   discover-projects:
     name: Discover Projects
@@ -104,7 +106,8 @@ jobs:
       - name: Checkout code on branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.ref_name }}
+          repository: ${{ github.repository }}
 
       - name: Find all .NET projects
         id: find-projects
@@ -123,8 +126,6 @@ jobs:
           done <<< "$projects"
           project_array="$project_array]"
           project_count=$(echo "$projects" | wc -l)
-          echo "Found $project_count projects:"
-          echo "$projects"
           echo "projects=$project_array" >> $GITHUB_OUTPUT
           echo "project-count=$project_count" >> $GITHUB_OUTPUT
 
@@ -141,7 +142,8 @@ jobs:
       - name: Checkout code on branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.ref_name }}
+          repository: ${{ github.repository }}
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -165,7 +167,10 @@ jobs:
       - name: Build project
         run: |
           echo "🔨 Building: ${{ matrix.project.name }}"
-          dotnet build "${{ matrix.project.path }}" --configuration Release --no-restore --verbosity normal
+          dotnet build "${{ matrix.project.path }}" \
+            --configuration Release \
+            --no-restore \
+            --verbosity normal
 
       - name: Upload build artifacts (on failure)
         if: failure()
@@ -188,7 +193,8 @@ jobs:
       - name: Checkout code on branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.ref_name }}
+          repository: ${{ github.repository }}
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -201,26 +207,22 @@ jobs:
           echo "🔍 Determining resolved Ivy version from packages..."
           project_file=$(find . -name "*.csproj" -not -path "*/bin/*" -not -path "*/obj/*" | head -1)
           if [ -n "$project_file" ]; then
-            echo "Checking resolved packages for: $project_file"
             dotnet restore "$project_file" --verbosity quiet
             project_dir=$(dirname "$project_file")
             assets_file="$project_dir/obj/project.assets.json"
             if [ -f "$assets_file" ]; then
-              resolved_version=$(jq -r '.libraries | to_entries[] | select(.key | startswith("Ivy/")) | .key | split("/")[1]' "$assets_file" 2>/dev/null | head -1)
+              resolved_version=$(jq -r '.libraries | to_entries[] | select(.key | startswith("Ivy/")) | .key | split("/")[1]' "$assets_file" | head -1)
               if [ -n "$resolved_version" ] && [ "$resolved_version" != "null" ]; then
-                echo "✅ Resolved Ivy version: $resolved_version"
                 echo "resolved-version=$resolved_version" >> $GITHUB_OUTPUT
               else
-                echo "⚠️ Could not determine resolved version from assets file"
                 echo "resolved-version=${{ needs.check-ivy-version.outputs.latest-version }}" >> $GITHUB_OUTPUT
               fi
             else
-              echo "⚠️ Project assets file not found, using latest version"
               echo "resolved-version=${{ needs.check-ivy-version.outputs.latest-version }}" >> $GITHUB_OUTPUT
             fi
           else
-            echo "⚠️ No project files found"
             echo "resolved-version=unknown" >> $GITHUB_OUTPUT
+          fi
 
   build-summary:
     name: Build Summary
@@ -231,46 +233,16 @@ jobs:
       - name: Generate build summary
         run: |
           echo "# 🚀 Ivy-Examples Build Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## 📦 Ivy Version Information" >> $GITHUB_STEP_SUMMARY
           resolved_version="${{ needs.detect-resolved-version.outputs.resolved-version }}"
           latest_version="${{ needs.check-ivy-version.outputs.latest-version }}"
-          echo "- **Project Configuration:** \`1.*\` (wildcard)" >> $GITHUB_STEP_SUMMARY
+          echo "## 📦 Ivy Version Information" >> $GITHUB_STEP_SUMMARY
           echo "- **Resolved Version:** $resolved_version" >> $GITHUB_STEP_SUMMARY
           echo "- **Latest Available:** $latest_version" >> $GITHUB_STEP_SUMMARY
-          if [ "$resolved_version" = "$latest_version" ]; then
-            echo "- **Status:** ✅ Using latest version" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.check-ivy-version.outputs.version-changed }}" == "true" ]; then
-            echo "- **Status:** 🆕 New version available!" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- **Status:** ℹ️ Resolved to compatible version" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Total Projects:** ${{ needs.discover-projects.outputs.project-count }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ needs.build-projects.result }}" == "success" ]; then
-            echo "## ✅ All builds successful! 🎉" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "All ${{ needs.discover-projects.outputs.project-count }} projects built successfully." >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.build-projects.result }}" == "failure" ]; then
-            echo "## ❌ Some builds failed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "One or more projects failed to build. Check the individual job logs for details." >> $GITHUB_STEP_SUMMARY
-          else
-            echo "## ⚠️ Build status: ${{ needs.build-projects.result }}" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## 📊 Build Matrix Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Check individual job results in the workflow run above." >> $GITHUB_STEP_SUMMARY
-
       - name: Set workflow status
         run: |
           if [ "${{ needs.build-projects.result }}" != "success" ]; then
-            echo "❌ Build workflow failed"
             exit 1
-          else
-            echo "✅ Build workflow succeeded"
           fi
 
   create-badge:
@@ -282,10 +254,7 @@ jobs:
       - name: Create build status badge
         run: |
           if [ "${{ needs.build-summary.result }}" == "success" ]; then
-            badge_color="brightgreen"
-            badge_message="passing"
+            echo "Build passing"
           else
-            badge_color="red"
-            badge_message="failing"
+            echo "Build failing"
           fi
-          echo "Build status: $badge_message ($badge_color)"
