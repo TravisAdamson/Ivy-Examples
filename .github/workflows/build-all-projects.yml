@@ -5,9 +5,8 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
-  workflow_dispatch: # Allow manual triggering
+  workflow_dispatch:
   schedule:
-    # Check for new Ivy versions daily at 6 AM UTC
     - cron: '0 6 * * *'
 
 env:
@@ -15,9 +14,15 @@ env:
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
 
+# Reusable checkout config
+x-checkout: &checkout
+  uses: actions/checkout@v4
+  with:
+    repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+    ref: ${{ github.head_ref || github.ref_name }}
+
 jobs:
   check-ivy-version:
-    name: Check Ivy Version
     runs-on: ubuntu-latest
     outputs:
       should-build: ${{ steps.version-check.outputs.should-build }}
@@ -26,10 +31,7 @@ jobs:
       version-changed: ${{ steps.version-check.outputs.version-changed }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
-          ref: ${{ github.head_ref || github.ref_name }}
+        <<: *checkout
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -47,7 +49,6 @@ jobs:
           should_build="false"
 
           if [ "${{ github.event_name }}" == "schedule" ]; then
-            echo "📅 Scheduled run - checking for Ivy version updates..."
             last_known_version_file=".github/last-ivy-version.txt"
             last_known_version=""
             if [ -f "$last_known_version_file" ]; then
@@ -79,7 +80,6 @@ jobs:
           echo "version-changed=$version_changed" >> $GITHUB_OUTPUT
 
   discover-projects:
-    name: Discover Projects
     runs-on: ubuntu-latest
     needs: check-ivy-version
     if: needs.check-ivy-version.outputs.should-build == 'true'
@@ -88,10 +88,7 @@ jobs:
       project-count: ${{ steps.find-projects.outputs.project-count }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
-          ref: ${{ github.head_ref || github.ref_name }}
+        <<: *checkout
 
       - name: Find all .NET projects
         id: find-projects
@@ -114,7 +111,6 @@ jobs:
           echo "project-count=$project_count" >> $GITHUB_OUTPUT
 
   build-projects:
-    name: Build
     runs-on: ubuntu-latest
     needs: [check-ivy-version, discover-projects]
     if: needs.check-ivy-version.outputs.should-build == 'true' && needs.discover-projects.outputs.project-count > 0
@@ -124,10 +120,7 @@ jobs:
         project: ${{ fromJson(needs.discover-projects.outputs.projects) }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
-          ref: ${{ github.head_ref || github.ref_name }}
+        <<: *checkout
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -167,7 +160,6 @@ jobs:
           retention-days: 7
 
   detect-resolved-version:
-    name: Detect Resolved Ivy Version
     runs-on: ubuntu-latest
     needs: [check-ivy-version, build-projects]
     if: needs.check-ivy-version.outputs.should-build == 'true' && (success() || failure())
@@ -175,10 +167,7 @@ jobs:
       resolved-version: ${{ steps.get-version.outputs.resolved-version }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
-          ref: ${{ github.head_ref || github.ref_name }}
+        <<: *checkout
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -190,12 +179,26 @@ jobs:
         run: |
           echo "🔍 Determining resolved Ivy version from packages..."
           project_file=$(find . -name "*.csproj" -not -path "*/bin/*" -not -path "*/obj/*" | head -1)
+
           if [ -n "$project_file" ]; then
             dotnet restore "$project_file" --verbosity quiet
             project_dir=$(dirname "$project_file")
             assets_file="$project_dir/obj/project.assets.json"
+
             if [ -f "$assets_file" ]; then
-              resolved_version=$(jq -r '.libraries | to_entries[] | select(.key | startswith("Ivy/")) | .key | split("/")[1]' "$assets_file" | head -1)
+              # Extract Ivy version from project.assets.json
+              # Explanation:
+              # - Get all libraries
+              # - Filter keys starting with Ivy/
+              # - Split to get the version part
+              resolved_version=$(jq -r '
+                .libraries
+                | to_entries[]
+                | select(.key | startswith("Ivy/"))
+                | .key
+                | split("/")[1]
+              ' "$assets_file" | head -1)
+
               if [ -n "$resolved_version" ] && [ "$resolved_version" != "null" ]; then
                 echo "resolved-version=$resolved_version" >> $GITHUB_OUTPUT
               else
@@ -209,7 +212,6 @@ jobs:
           fi
 
   build-summary:
-    name: Build Summary
     runs-on: ubuntu-latest
     needs: [check-ivy-version, discover-projects, build-projects, detect-resolved-version]
     if: always() && needs.check-ivy-version.outputs.should-build == 'true'
@@ -226,15 +228,14 @@ jobs:
 
       - name: Set workflow status
         run: |
-          if [ "${{ needs.build-projects.result }}" == "failure" ]; then
-              echo "❌ Build workflow failed"
-              exit 1
-            else
-              echo "✅ Build workflow succeeded (or skipped)"
-            fi
+          if [ "${{ needs.build-projects.result }}" != "success" ]; then
+            echo "❌ Build workflow failed"
+            exit 1
+          else
+            echo "✅ Build workflow succeeded"
+          fi
 
   create-badge:
-    name: Update Build Badge
     runs-on: ubuntu-latest
     needs: [check-ivy-version, build-summary, detect-resolved-version]
     if: github.ref == 'refs/heads/main' && always() && needs.check-ivy-version.outputs.should-build == 'true'
