@@ -1,4 +1,6 @@
-﻿using Ivy.Mapster.Models;
+﻿using System.Text.Json;
+using Ivy.Mapster.Mapping;
+using Ivy.Mapster.Models;
 using Mapster;
 
 namespace Ivy.Mapster.Apps
@@ -8,26 +10,36 @@ namespace Ivy.Mapster.Apps
     {
         public override object? Build()
         {
-            var personState = this.UseState<Person?>();
-            var dtoState = this.UseState<PersonDto?>();
+            TypeAdapterConfig.GlobalSettings.Scan(typeof(MapsterConfig).Assembly);
+
+            var personJsonState = UseState(ToPrettyJson(new Person
+            {
+                FirstName = "Jane",
+                LastName = "Doe",
+                Age = 25
+            }));
+
+            var dtoJsonState = UseState(ToPrettyJson(new PersonDto
+            {
+                FullName = "Jane Doe",
+                IsAdult = true
+            }));
 
             // Person -> PersonDto
             var toDtoButton = new Button("Person -> PersonDto")
             {
                 OnClick = async (evt) =>
                 {
-                    if (personState.Value == null)
+                    try
                     {
-                        personState.Value = new Person
-                        {
-                            FirstName = "Jane",
-                            LastName = "Doe",
-                            Age = 25
-                        };
+                        var person = JsonSerializer.Deserialize<Person>(personJsonState.Value);
+                        var dto = person.Adapt<PersonDto>();
+                        dtoJsonState.Value = ToPrettyJson(dto);
                     }
-
-                    var dto = personState.Value.Adapt<PersonDto>();
-                    dtoState.Value = dto;
+                    catch (Exception ex)
+                    {
+                        dtoJsonState.Value = $"{{ \"error\": \"{ex.Message}\" }}";
+                    }
 
                     await ValueTask.CompletedTask;
                 }
@@ -38,17 +50,16 @@ namespace Ivy.Mapster.Apps
             {
                 OnClick = async (evt) =>
                 {
-                    if (dtoState.Value == null)
+                    try
                     {
-                        dtoState.Value = new PersonDto
-                        {
-                            FullName = "John Smith",
-                            IsAdult = true
-                        };
+                        var dto = JsonSerializer.Deserialize<PersonDto>(dtoJsonState.Value);
+                        var person = dto.Adapt<Person>();
+                        personJsonState.Value = ToPrettyJson(person);
                     }
-
-                    var person = dtoState.Value.Adapt<Person>();
-                    personState.Value = person;
+                    catch (Exception ex)
+                    {
+                        personJsonState.Value = $"{{ \"error\": \"{ex.Message}\" }}";
+                    }
 
                     await ValueTask.CompletedTask;
                 }
@@ -56,17 +67,26 @@ namespace Ivy.Mapster.Apps
 
             return Layout.Center()
                | new Card(
-                       Layout.Vertical().Gap(6)
+                       Layout.Vertical().Gap(12)
+                       | Text.H4("Person")
+                       | personJsonState.ToCodeInput()
+                           .Width(Size.Units(100).Max(500))
+                           .Height(Size.Auto())
+                           .Language(Languages.Json)
                        | toDtoButton
-                       | Text.Block(personState.Value != null
-                           ? $"Person: {personState.Value.FirstName} {personState.Value.LastName}, Age: {personState.Value.Age}"
-                           : "Person: <empty>")
+                       | Text.H4("PersonDto")
+                       | dtoJsonState.ToCodeInput()
+                           .Width(Size.Units(100).Max(500))
+                           .Height(Size.Auto())
+                           .Language(Languages.Json)
                        | toPersonButton
-                       | Text.Block(dtoState.Value != null
-                           ? $"PersonDto: {dtoState.Value.FullName}, IsAdult: {dtoState.Value.IsAdult}"
-                           : "PersonDto: <empty>")
-                     )
-                   .Width(Size.Units(120).Max(500));
+                   )
+                   .Width(Size.Units(120).Max(600));
         }
+
+        private static string ToPrettyJson(object? obj) =>
+            obj == null
+                ? ""
+                : JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
     }
 }
