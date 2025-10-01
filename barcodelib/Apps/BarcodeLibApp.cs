@@ -9,12 +9,12 @@ namespace BarcodelibExample.Apps
     {
         private static readonly (string Label, Type Type)[] Symbologies =
         {
-       ("UPC‑A", Type.UpcA),
-        ("EAN‑13", Type.Ean13),
+       ("UPC-A", Type.UpcA),
+        ("EAN-13", Type.Ean13),
         ("Code128", Type.Code128),
         ("Code39", Type.Code39),
         ("Interleaved 2 of 5", Type.Interleaved2Of5),
-        ("ITF‑14", Type.Itf14)
+        ("ITF-14", Type.Itf14)
     };
 
         public override object? Build()
