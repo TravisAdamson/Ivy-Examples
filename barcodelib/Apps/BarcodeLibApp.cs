@@ -22,6 +22,8 @@ namespace BarcodelibExample.Apps
             var text = UseState("038000356216");
             var typeIndex = UseState(0);
             var includeLabel = UseState(true);
+            // holds the generated preview data URI. null means no preview yet
+            var previewUri = UseState<string?>("");
 
             // fixed barcode size
             const int width = 300;
@@ -58,7 +60,28 @@ namespace BarcodelibExample.Apps
                     | new Button(includeLabel.Value ? "Label: ON" : "Label: OFF")
                         .HandleClick(() => includeLabel.Value = !includeLabel.Value)
                     | Text.Muted("Barcode size is fixed at 300×120 pixels.")
-                    | new Button("Download").Primary().Icon(Icons.Download).Url(downloadUrl.Value)
+                    // button to generate the preview; clicking this will generate and display the barcode
+                    | new Button("Preview").Primary().Icon(Icons.Eye)
+                        .HandleClick(() =>
+                        {
+                            if (string.IsNullOrWhiteSpace(text.Value))
+                            {
+                                previewUri.Value = null;
+                                return;
+                            }
+                            var (_, type) = Symbologies[typeIndex.Value];
+                            var b = new Barcode { IncludeLabel = includeLabel.Value };
+                            using var bitmap = b.Encode(type, text.Value, SKColors.Black, SKColors.White, width, height);
+                            using var data = bitmap.Encode(SKEncodedImageFormat.Png, 100);
+                            var base64 = Convert.ToBase64String(data.ToArray());
+                            previewUri.Value = $"data:image/png;base64,{base64}";
+                        })
+                    // show the preview image if available
+                    | (previewUri.Value != null ? new Image(previewUri.Value!).Width(150).Height(60) : null)
+                    // disable the download button until a preview has been generated
+                    | new Button("Download").Primary().Icon(Icons.Download)
+                        .Disabled(previewUri.Value == null)
+                        .Url(downloadUrl.Value)
                   ).Width(Size.Units(120).Max(900));
         }
     }
