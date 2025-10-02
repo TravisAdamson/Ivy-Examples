@@ -23,7 +23,7 @@ namespace BarcodelibExample.Apps
             var typeIndex = UseState(0);
             var includeLabel = UseState(true);
             // holds the generated preview data URI. null means no preview yet
-            var previewUri = UseState<string?>("");
+            var previewUri = UseState("");
 
             // fixed barcode size
             const int width = 300;
@@ -66,7 +66,7 @@ namespace BarcodelibExample.Apps
                         {
                             if (string.IsNullOrWhiteSpace(text.Value))
                             {
-                                previewUri.Value = null;
+                                previewUri.Value = "";
                                 return;
                             }
                             var (_, type) = Symbologies[typeIndex.Value];
@@ -77,10 +77,10 @@ namespace BarcodelibExample.Apps
                             previewUri.Value = $"data:image/png;base64,{base64}";
                         })
                     // show the preview image if available
-                    | (previewUri.Value != null ? new Image(previewUri.Value!).Width(150).Height(60) : null)
+                    | (previewUri.Value != "" ? new Image(previewUri.Value!).Width(150).Height(60) : "")
                     // disable the download button until a preview has been generated
                     | new Button("Download").Primary().Icon(Icons.Download)
-                        .Disabled(previewUri.Value == null)
+                        .Disabled(previewUri.Value == "")
                         .Url(downloadUrl.Value)
                   ).Width(Size.Units(120).Max(900));
         }
