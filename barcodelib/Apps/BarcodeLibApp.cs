@@ -80,7 +80,7 @@ namespace BarcodelibExample.Apps
                     | (!string.IsNullOrEmpty(previewUri.Value) ? new Image(previewUri.Value!).Width(150).Height(60) : "")
                     // disable the download button until a preview has been generated
                     | new Button("Download").Primary().Icon(Icons.Download)
-                        .Disabled(previewUri.Value == "")
+                        .Disabled(string.IsNullOrEmpty(previewUri.Value))
                         .Url(downloadUrl.Value)
                   ).Width(Size.Units(120).Max(900));
         }
